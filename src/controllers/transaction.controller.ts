@@ -78,9 +78,9 @@ export class TransactionController {
         const address = req.query.address;
 
         return {
-            address: address,
-            page: page,
-            limit: limit
+            address,
+            page,
+            limit
         };
     }
 

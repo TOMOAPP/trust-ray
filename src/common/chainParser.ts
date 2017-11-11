@@ -58,11 +58,10 @@ export class ChainParser {
         const endBlock = startBlock + Math.min(concurentBlocks, lastBlock - startBlock);
         const numberBlocks = range(startBlock, endBlock);
 
-        const promises = numberBlocks.map((number) => { return this.parseBlock(number)});
-        Promise.all(promises).then((blocks: any[]) => {
-
+        const promises = numberBlocks.map((number) => this.parseBlock(number));
+        Promise.all(promises).then((blocks: any[]) => 
             // ============ saving transactions ========== //
-            return this.saveTransactions(blocks).then((bulkResult: any) => {
+            this.saveTransactions(blocks).then((bulkResult: any) => {
                 blocks.map((block: any) => {
                     block.transactions.map((transaction: any) => {
                         if (transaction.input !== "0x") {
@@ -70,10 +69,8 @@ export class ChainParser {
                         }
                     });
                 });
-            });
-
-
-        }).then((results: any) => {
+            })
+        ).then((results: any) => {
             this.saveLastParsedBlock(endBlock);
             if (endBlock < lastBlock) {
                 this.startBlock(endBlock + 1, lastBlock, concurentBlocks);
@@ -121,8 +118,8 @@ export class ChainParser {
                     blockNumber: Number(transaction.blockNumber),
                     timeStamp: String(block.timestamp),
                     nonce: Number(transaction.nonce),
-                    from: from,
-                    to: to,
+                    from,
+                    to,
                     value: String(transaction.value),
                     gas: String(transaction.gas),
                     gasPrice: String(transaction.gasPrice),
@@ -162,9 +159,9 @@ export class ChainParser {
         const p3 = contractInstance.methods.decimals().call();
         const p4 = contractInstance.methods.symbol().call();
 
-        return Promise.all([p1, p2, p3, p4]).then(([name, totalSupply, decimals, symbol]: any[]) => {
-            return this.updateERC20Token(contract, {name, totalSupply, decimals, symbol});
-        }).catch((err: Error) => {
+        return Promise.all([p1, p2, p3, p4]).then(([name, totalSupply, decimals, symbol]: any[]) =>
+            this.updateERC20Token(contract, {name, totalSupply, decimals, symbol})
+        ).catch((err: Error) => {
             winston.error(`Could not parse input for contract ${contract} with error: ${err}.`);
             this.blacklist.push(contract);
         });
@@ -210,8 +207,8 @@ export class ChainParser {
         const data = {
             transactionId: transactionId,
             type: "token_transfer",
-            from: from,
-            to: to,
+            from,
+            to,
             value: value,
             contract: erc20ContractId
         };

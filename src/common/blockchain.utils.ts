@@ -233,8 +233,8 @@ export class BlockchainUtils {
                 return {
                     transactionType: "token_transfer",
                     contract: contract,
-                    to: to,
-                    from: from,
+                    to,
+                    from,
                     value: value,
                     name: values[0],
                     totalSupply: values[1],

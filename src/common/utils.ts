@@ -7,6 +7,5 @@ import { Response } from "express";
  * @param content of the response
  */
 export function sendJSONresponse(res: Response, status: number, content: any) {
-    res.status(status);
-    res.json(content);
+    res.status(status).json(content);
 }
