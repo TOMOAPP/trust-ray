@@ -131,7 +131,7 @@ export class TransactionParser {
             type: "token_transfer",
             from: from,
             to: to,
-            value: value,
+            values: value,
             contract: erc20ContractId
         };
         return TransactionOperation.findOneAndUpdate({transactionId: transactionId}, data, {upsert: true, new: true}).then((operation: any) => {
@@ -151,10 +151,8 @@ export class TransactionParser {
 
     // MULTI-SEND PARSING
 
-    public parseMultiSendContract(transactionId: string, transactionFrom: string, decodedInput: any) {
-        // add prefix to erc20 contract address
-        const erc20Contract = "0x" + decodedInput.inputs[0];
-        return this.decodeMultiSendValues(decodedInput.inputs[2], erc20Contract).then((values: string[]) => {
+    public parseMultiSendContract(transactionId: string, transactionFrom: string, decodedInput: any, erc20ContractId: any) {
+        return this.decodeMultiSendValues(decodedInput.inputs[2], "0x" + decodedInput.inputs[0]).then((values: string[]) => {
             const from = transactionFrom.toLowerCase();
             const to = decodedInput.inputs[1];
             const data = {
@@ -162,8 +160,8 @@ export class TransactionParser {
                 type: "multisend_token_transfer",
                 from: from,
                 to: to,
-                value: values,
-                contract: erc20Contract
+                values: values,
+                contract: erc20ContractId
             };
 
             return TransactionOperation.findOneAndUpdate({transactionId: transactionId}, data, {upsert: true, new: true}).then((operation: any) => {
