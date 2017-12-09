@@ -4,6 +4,7 @@ import { Transaction } from "../models/TransactionModel";
 import { TransactionOperation } from "../models/TransactionOperationModel";
 import { removeScientificNotationFromNumbString } from "./Utils";
 import { Config } from "./Config";
+import { ERC20Contract } from "../models/Erc20ContractModel";
 
 const erc20abi = require("./contracts/Erc20Abi");
 const erc20ABIDecoder = require("abi-decoder");
@@ -145,6 +146,53 @@ export class TransactionParser {
         }).catch((err: Error) => {
             winston.error(`Could not save transaction operation with error: ${err}`);
         });
+    }
+
+
+    // MULTI-SEND PARSING
+
+    public parseMultiSendContract(transactionId: string, transactionFrom: string, decodedInput: any) {
+        // add prefix to erc20 contract address
+        const erc20Contract = "0x" + decodedInput.inputs[0];
+        return this.decodeMultiSendValues(decodedInput.inputs[2], erc20Contract).then((values: string[]) => {
+            const from = transactionFrom.toLowerCase();
+            const to = decodedInput.inputs[1];
+            const data = {
+                transactionId: transactionId,
+                type: "multisend_token_transfer",
+                from: from,
+                to: to,
+                value: values,
+                contract: erc20Contract
+            };
+
+            return TransactionOperation.findOneAndUpdate({transactionId: transactionId}, data, {upsert: true, new: true}).then((operation: any) => {
+                // update the original transaction to refer to this operation
+                return Transaction.findOneAndUpdate({_id: transactionId}, {
+                    operations: [operation._id],
+                    addresses: [from, to]
+                }).then(() => {
+                    return Promise.resolve(operation);
+                }).catch((err: Error) => {
+                    winston.error(`Could not add operation to transaction with ID ${transactionId} with error: ${err}`);
+                });
+            }).catch((err: Error) => {
+                winston.error(`Could not save transaction operation with error: ${err}`);
+            });
+        });
+    }
+
+    private decodeMultiSendValues(valueObjects: any, erc20Contract: any) {
+        const promises: Promise<string>[] = [];
+        valueObjects.map((valueObject: any) => {
+            const rawString = valueObject.toString();
+            // adjust decimals of value string
+            promises.push(ERC20Contract.findOne({address: erc20Contract}).then((erc20contract: any) => {
+                const insertIndex = rawString.length - erc20contract.decimals;
+                return rawString.slice(0, insertIndex) + "." + rawString.slice(insertIndex, rawString.length);
+            }));
+        });
+        return Promise.all(promises);
     }
 
 }
