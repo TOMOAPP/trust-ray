@@ -122,8 +122,8 @@ export class TransactionParser {
     }
 
     private findOrCreateTransactionOperation(transactionId: any, transactionFrom: any, decodedInput: any, erc20ContractId: any): Promise<void> {
-        const from = transactionFrom.toLowerCase();
-        const to = decodedInput.params[0].value.toLowerCase();
+        const from = [transactionFrom.toLowerCase()];
+        const to = [decodedInput.params[0].value.toLowerCase()];
         const value = removeScientificNotationFromNumbString(decodedInput.params[1].value);
 
         const data = {
