@@ -22,14 +22,14 @@ const transactionOperationSchema = new Schema({
         type: String,
         required: true
     },
-    to: {
+    to: [{
         type: String,
         required: true
-    },
-    value: {
+    }],
+    values: [{
         type: String,
         required: true
-    },
+    }],
     contract: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ERC20Contract",
