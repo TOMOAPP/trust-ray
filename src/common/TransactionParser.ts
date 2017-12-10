@@ -26,10 +26,10 @@ export class TransactionParser {
             return this.mergeTransactionsAndReceipts(extractedTransactions, receipts);
         }).then((transactions: any) => {
             const bulkTransactions = Transaction.collection.initializeUnorderedBulkOp();
-            
+
             transactions.forEach((transaction: any) => 
                 bulkTransactions.find({_id: transaction._id}).upsert().replaceOne(transaction)
-            )
+            );
 
             if (bulkTransactions.length === 0) {
                 return Promise.resolve();
@@ -38,7 +38,7 @@ export class TransactionParser {
             return bulkTransactions.execute().then((bulkResult: any) => {
                 return Promise.resolve(transactions);
             });
-        })        
+        })
     }
 
     private mergeTransactionsAndReceipts(transactions: any[], receipts: any[]) {
@@ -69,8 +69,9 @@ export class TransactionParser {
     private extractTransactionData(block: any, transaction: any) {
         const hash = String(transaction.hash);
         const from = String(transaction.from).toLowerCase();
-        const to = String(transaction.to).toLowerCase();
-        const data: any =  {
+        const to = transaction.to ? String(transaction.to).toLowerCase() : null;
+
+        return {
             _id: hash,
             blockNumber: Number(transaction.blockNumber),
             timeStamp: String(block.timestamp),
@@ -84,7 +85,6 @@ export class TransactionParser {
             input: String(transaction.input),
             addresses: [from, to]
         };
-        return data
     }
 
     // ========================== OPERATION PARSING ========================== //
@@ -142,11 +142,11 @@ export class TransactionParser {
 
     // https://gist.github.com/jdkanani/e76baa731a2b0cb6bbff26d085476722
     private fetchTransactionReceipts (transactions: any) {
-        return new Promise((resolve, reject)=>{
-          let result: any = [];
+        return new Promise((resolve, reject) => {
+          const result: any = [];
           let _resolved = false;
-      
-          let callback = (err: Error, obj: any) => {
+
+          const callback = (err: Error, obj: any) => {
             if (_resolved) return;
             result.push(err ? null : obj);
             if (result.length >= transactions.length) {
@@ -154,9 +154,9 @@ export class TransactionParser {
               resolve(result);
             }
           };
-      
+
           if (transactions.length > 0) {
-            var batch = new Config.web3.BatchRequest();
+            const batch = new Config.web3.BatchRequest();
             transactions.forEach((tx: any) => {
               batch.add(Config.web3.eth.getTransactionReceipt.request(tx, callback));
             });
